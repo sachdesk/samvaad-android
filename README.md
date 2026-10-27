@@ -7,8 +7,10 @@ Version 0.1.0. Android 7.0 (API 24) and up.
 
 ## Install
 
+The SDK is on Maven Central. Make sure `mavenCentral()` is in your repositories (new
+Android Studio projects already have it), then add the dependency:
+
 ```kotlin
-// settings.gradle.kts: add the repository that hosts the SDK
 // app/build.gradle.kts
 dependencies {
     implementation("com.samvaads:widget:0.1.0")
