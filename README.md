@@ -23,13 +23,18 @@ Call once, in `Application.onCreate`:
 class ShopApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        Samvaad.configure(this, tenantId = "yobruh", host = "yobruh.samvaads.com")
+        Samvaad.configure(
+            this,
+            tenantId = "6f1c2b8e-4a3d-4e2f-9b7a-1c5d8e0f2a34", // your tenant id
+            host = "yobruh.samvaads.com",
+        )
     }
 }
 ```
 
-`host` is the host serving your chat widget. Leave it out and it defaults to
-`<tenantId>.samvaads.com`. It must be https.
+`host` is required: the host serving your chat widget, as `yobruh.samvaads.com` or
+`https://yobruh.samvaads.com`. It must be https and must not include a path, query or
+credentials.
 
 ## Identify the customer
 
@@ -138,15 +143,15 @@ Customers can attach files from the system file picker. No permissions are neede
 
 ## Local testing
 
-In a debuggable build you can point the SDK at a local Samvaad UI:
+In a debuggable build you can point the SDK at a local Samvaad UI (`http://localhost`, `127.0.0.1` or `10.0.2.2` only):
 
 ```kotlin
-Samvaad.configure(this, tenantId = "yobruh", host = "http://10.0.2.2:5173") // emulator
-Samvaad.configure(this, tenantId = "yobruh", host = "http://localhost:5173") // device + adb reverse
+Samvaad.configure(this, tenantId, host = "http://10.0.2.2:5173") // emulator
+Samvaad.configure(this, tenantId, host = "http://localhost:5173") // device + adb reverse
 ```
 
 Plain http also needs a debug-only network security config in your app that allows cleartext
-for `10.0.2.2` / `localhost`. Release builds accept https only.
+for `10.0.2.2` / `localhost` / `127.0.0.1`. Release builds accept https only.
 
 ## Sample app
 

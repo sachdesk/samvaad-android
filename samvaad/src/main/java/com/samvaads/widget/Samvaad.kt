@@ -17,7 +17,7 @@ import java.lang.ref.WeakReference
  * Samvaad chat for Android apps.
  *
  * ```
- * Samvaad.configure(applicationContext, tenantId = "yobruh", host = "yobruh.samvaads.com")
+ * Samvaad.configure(applicationContext, tenantId = "<your tenant id>", host = "yobruh.samvaads.com")
  * Samvaad.identify(email, name, userHash)   // userHash comes from YOUR backend
  * Samvaad.present(activity)
  * ```
@@ -39,19 +39,19 @@ object Samvaad {
      * Set up the SDK. Call once, from `Application.onCreate`, before anything else.
      *
      * @param tenantId your Samvaad tenant id.
-     * @param host the host serving your chat widget, e.g. `yobruh.samvaads.com`. Defaults to
-     *   `<tenantId>.samvaads.com`. Must be https; `http://localhost:<port>` and
+     * @param host the host serving your chat widget, e.g. `yobruh.samvaads.com` or
+     *   `https://yobruh.samvaads.com`. Required. Must be https; `http://localhost:<port>`,
+     *   `http://127.0.0.1:<port>` and
      *   `http://10.0.2.2:<port>` are accepted only in debuggable builds.
      * @throws IllegalArgumentException for an invalid tenant id or host.
      */
     @JvmStatic
-    @JvmOverloads
-    fun configure(context: Context, tenantId: String, host: String? = null) {
+    fun configure(context: Context, tenantId: String, host: String) {
         require(tenantId.isNotBlank()) { "tenantId is required" }
         val app = context.applicationContext
-        val resolved = WidgetOrigin.resolve(tenantId, host, allowLocalHttp = isDebuggable(app))
+        val resolved = WidgetOrigin.resolve(host, allowLocalHttp = isDebuggable(app))
         val s = SdkState(PrefsStore(app), app.packageName)
-        s.saveConfig(tenantId.trim(), host?.trim()?.takeIf { it.isNotEmpty() })
+        s.saveConfig(tenantId.trim(), host.trim())
         state = s
         origin = resolved
     }
@@ -154,8 +154,9 @@ object Samvaad {
         state?.let { return it }
         val app = context.applicationContext
         val s = SdkState(PrefsStore(app), app.packageName)
-        val tenantId = s.tenantId ?: throw IllegalStateException("Call Samvaad.configure(...) first")
-        origin = WidgetOrigin.resolve(tenantId, s.host, allowLocalHttp = isDebuggable(app))
+        val host = s.host
+        if (s.tenantId == null || host == null) throw IllegalStateException("Call Samvaad.configure(...) first")
+        origin = WidgetOrigin.resolve(host, allowLocalHttp = isDebuggable(app))
         state = s
         return s
     }

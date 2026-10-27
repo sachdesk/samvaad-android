@@ -140,10 +140,10 @@ class SessionTest {
 
     @Test
     fun configAndUnreadPersist() {
-        state.saveConfig("yobruh", "yobruh.samvaads.com")
+        state.saveConfig("6f1c2b8e-4a3d-4e2f-9b7a-1c5d8e0f2a34", "yobruh.samvaads.com")
         state.unreadCount = 4
         val again = SdkState(store, "in.yobruh.shop")
-        assertEquals("yobruh", again.tenantId)
+        assertEquals("6f1c2b8e-4a3d-4e2f-9b7a-1c5d8e0f2a34", again.tenantId)
         assertEquals("yobruh.samvaads.com", again.host)
         assertEquals(4, again.unreadCount)
         again.unreadCount = -1

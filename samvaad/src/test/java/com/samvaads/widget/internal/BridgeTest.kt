@@ -70,7 +70,7 @@ class BridgeTest {
 
     @Test
     fun pushPayloadCheck() {
-        assertTrue(PushPayload.isSamvaad(mapOf("samvaad" to "1", "tenant_id" to "yobruh", "session_id" to "s1")))
+        assertTrue(PushPayload.isSamvaad(mapOf("samvaad" to "1", "tenant_id" to "6f1c2b8e-4a3d-4e2f-9b7a-1c5d8e0f2a34", "session_id" to "s1")))
         assertFalse(PushPayload.isSamvaad(mapOf("samvaad" to "0")))
         assertFalse(PushPayload.isSamvaad(mapOf("promo" to "YB-1042")))
         assertFalse(PushPayload.isSamvaad(emptyMap()))

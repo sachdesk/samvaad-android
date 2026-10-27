@@ -10,45 +10,44 @@ class WidgetUrlTest {
     private val yobruh = WidgetOrigin("https", "yobruh.samvaads.com")
 
     @Test
-    fun defaultsHostToTenantSubdomain() {
-        assertEquals(yobruh, WidgetOrigin.resolve("yobruh", null, allowLocalHttp = false))
-        assertEquals(yobruh, WidgetOrigin.resolve("Yobruh", "  ", allowLocalHttp = false))
-    }
-
-    @Test
-    fun noHostAndTenantIdThatIsNotASubdomainFails() {
-        assertThrows { WidgetOrigin.resolve("65f0c0ffee/x", null, allowLocalHttp = false) }
+    fun hostIsRequired() {
+        assertThrows { WidgetOrigin.resolve("", allowLocalHttp = false) }
+        assertThrows { WidgetOrigin.resolve("   ", allowLocalHttp = true) }
     }
 
     @Test
     fun acceptsBareHostOrHttpsUrl() {
-        assertEquals(yobruh, WidgetOrigin.resolve("t1", "yobruh.samvaads.com", false))
-        assertEquals(yobruh, WidgetOrigin.resolve("t1", "https://Yobruh.samvaads.com/", false))
-        assertEquals(WidgetOrigin("https", "chat.yobruh.in"), WidgetOrigin.resolve("t1", "chat.yobruh.in", false))
-        assertEquals(WidgetOrigin("https", "chat.yobruh.in", 8443), WidgetOrigin.resolve("t1", "chat.yobruh.in:8443", false))
+        assertEquals(yobruh, WidgetOrigin.resolve("yobruh.samvaads.com", false))
+        assertEquals(yobruh, WidgetOrigin.resolve("https://Yobruh.samvaads.com/", false))
+        assertEquals(WidgetOrigin("https", "chat.yobruh.in"), WidgetOrigin.resolve("chat.yobruh.in", false))
+        assertEquals(WidgetOrigin("https", "chat.yobruh.in", 8443), WidgetOrigin.resolve("chat.yobruh.in:8443", false))
     }
 
     @Test
     fun rejectsPathsQueriesAndOtherSchemes() {
-        assertThrows { WidgetOrigin.resolve("t1", "https://yobruh.samvaads.com/embed", false) }
-        assertThrows { WidgetOrigin.resolve("t1", "https://yobruh.samvaads.com?x=1", false) }
-        assertThrows { WidgetOrigin.resolve("t1", "ftp://yobruh.samvaads.com", false) }
-        assertThrows { WidgetOrigin.resolve("t1", "https://user@yobruh.samvaads.com", false) }
+        assertThrows { WidgetOrigin.resolve("https://yobruh.samvaads.com/embed", false) }
+        assertThrows { WidgetOrigin.resolve("https://yobruh.samvaads.com?x=1", false) }
+        assertThrows { WidgetOrigin.resolve("ftp://yobruh.samvaads.com", false) }
+        assertThrows { WidgetOrigin.resolve("https://user@yobruh.samvaads.com", false) }
+        assertThrows { WidgetOrigin.resolve("https://user:pass@yobruh.samvaads.com", false) }
+        assertThrows { WidgetOrigin.resolve("yobruh.samvaads.com/embed/widget", false) }
+        assertThrows { WidgetOrigin.resolve("https://yobruh.samvaads.com#x", false) }
     }
 
     @Test
     fun localHttpOnlyInDebugAndOnlyForLocalHosts() {
-        assertThrows { WidgetOrigin.resolve("t1", "http://localhost:5173", allowLocalHttp = false) }
-        assertEquals(WidgetOrigin("http", "localhost", 5173), WidgetOrigin.resolve("t1", "http://localhost:5173", true))
-        assertEquals(WidgetOrigin("http", "10.0.2.2", 5173), WidgetOrigin.resolve("t1", "http://10.0.2.2:5173", true))
-        assertThrows { WidgetOrigin.resolve("t1", "http://yobruh.samvaads.com", allowLocalHttp = true) }
+        assertThrows { WidgetOrigin.resolve("http://localhost:5173", allowLocalHttp = false) }
+        assertEquals(WidgetOrigin("http", "localhost", 5173), WidgetOrigin.resolve("http://localhost:5173", true))
+        assertEquals(WidgetOrigin("http", "10.0.2.2", 5173), WidgetOrigin.resolve("http://10.0.2.2:5173", true))
+        assertEquals(WidgetOrigin("http", "127.0.0.1", 5173), WidgetOrigin.resolve("http://127.0.0.1:5173", true))
+        assertThrows { WidgetOrigin.resolve("http://yobruh.samvaads.com", allowLocalHttp = true) }
     }
 
     @Test
     fun buildsPageUrl() {
         assertEquals(
-            "https://yobruh.samvaads.com/embed/widget?tenant_id=yobruh&mode=app&theme=dark",
-            WidgetUrl.build(yobruh, "yobruh", PageTheme.DARK),
+            "https://yobruh.samvaads.com/embed/widget?tenant_id=6f1c2b8e-4a3d-4e2f-9b7a-1c5d8e0f2a34&mode=app&theme=dark",
+            WidgetUrl.build(yobruh, "6f1c2b8e-4a3d-4e2f-9b7a-1c5d8e0f2a34", PageTheme.DARK),
         )
         assertEquals(
             "http://10.0.2.2:5173/embed/widget?tenant_id=a%20b%26c&mode=app",

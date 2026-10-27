@@ -19,7 +19,6 @@ internal data class WidgetOrigin(val scheme: String, val host: String, val port:
 
     companion object {
         private val LOCAL_HOSTS = setOf("localhost", "127.0.0.1", "10.0.2.2")
-        private val LABEL = Regex("^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
 
         /**
          * Resolve the origin from `configure(tenantId, host)`.
@@ -28,18 +27,12 @@ internal data class WidgetOrigin(val scheme: String, val host: String, val port:
          *   Any https host is accepted.
          * - `http://localhost:<port>`, `http://127.0.0.1:<port>` and `http://10.0.2.2:<port>` are
          *   accepted only when [allowLocalHttp] is true (debuggable app builds).
-         * - With no `host`, the default is `<tenantId>.samvaads.com`, which needs a tenant id that is a
-         *   valid DNS label (the tenant's slug).
+         * - The host is required: tenant ids are UUIDs, so no host can be derived from them.
+         * - Paths, queries, fragments and credentials are rejected.
          */
-        fun resolve(tenantId: String, host: String?, allowLocalHttp: Boolean): WidgetOrigin {
-            val raw = host?.trim().orEmpty()
-            if (raw.isEmpty()) {
-                val slug = tenantId.trim().lowercase()
-                require(LABEL.matches(slug)) {
-                    "No host given and tenantId '$tenantId' is not a valid subdomain. Pass your widget host, e.g. \"yobruh.samvaads.com\"."
-                }
-                return WidgetOrigin("https", "$slug.samvaads.com")
-            }
+        fun resolve(host: String, allowLocalHttp: Boolean): WidgetOrigin {
+            val raw = host.trim()
+            require(raw.isNotEmpty()) { "host is required, e.g. \"yobruh.samvaads.com\"" }
             val withScheme = if (raw.contains("://")) raw else "https://$raw"
             val uri = parseUri(withScheme) ?: throw IllegalArgumentException("Invalid host '$host'")
             val scheme = uri.scheme?.lowercase()
@@ -47,7 +40,7 @@ internal data class WidgetOrigin(val scheme: String, val host: String, val port:
             require(!h.isNullOrEmpty()) { "Invalid host '$host'" }
             require(uri.rawPath.isNullOrEmpty() || uri.rawPath == "/") { "Host must not include a path: '$host'" }
             require(uri.rawQuery == null && uri.rawFragment == null) { "Host must not include a query: '$host'" }
-            require(uri.rawUserInfo == null) { "Host must not include user info: '$host'" }
+            require(uri.rawUserInfo == null) { "Host must not include credentials: '$host'" }
             return when (scheme) {
                 "https" -> WidgetOrigin("https", h, if (uri.port == 443) -1 else uri.port)
                 "http" -> {
