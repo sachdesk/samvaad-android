@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v3
+
+      - name: Check tag matches VERSION_NAME
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          version="$(grep -E '^VERSION_NAME=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')"
+          sdk_version="$(grep -E 'const val VERSION = ' samvaad/src/main/java/com/samvaads/widget/Samvaad.kt | sed -E 's/.*"(.*)".*/\1/')"
+          echo "tag=${tag} VERSION_NAME=${version} Samvaad.VERSION=${sdk_version}"
+          if [ -z "${version}" ]; then
+            echo "::error::VERSION_NAME is missing from gradle.properties"
+            exit 1
+          fi
+          if [ "${tag}" != "v${version}" ]; then
+            echo "::error::Tag ${tag} does not match VERSION_NAME ${version} (expected v${version})"
+            exit 1
+          fi
+          if [ "${sdk_version}" != "${version}" ]; then
+            echo "::error::Samvaad.VERSION (${sdk_version}) does not match VERSION_NAME (${version})"
+            exit 1
+          fi
+          case "${version}" in
+            *-SNAPSHOT) echo "::error::Refusing to release a SNAPSHOT version"; exit 1 ;;
+          esac
+
+      - name: Check publishing secrets
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          missing=""
+          for name in MAVEN_CENTRAL_USERNAME MAVEN_CENTRAL_PASSWORD SIGNING_KEY SIGNING_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              missing="${missing} ${name}"
+            fi
+          done
+          if [ -n "${missing}" ]; then
+            echo "::error::Missing repository secrets:${missing}. See RELEASING.md."
+            exit 1
+          fi
+
+      - name: Build, unit tests and lint
+        run: ./gradlew assembleRelease testReleaseUnitTest lintRelease --stacktrace
+
+      - name: Publish to Maven Central
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          # SIGNING_KEY_ID is optional; an empty value would be read as a key id.
+          if [ -z "${ORG_GRADLE_PROJECT_signingInMemoryKeyId}" ]; then
+            unset ORG_GRADLE_PROJECT_signingInMemoryKeyId
+          fi
+          ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache --stacktrace

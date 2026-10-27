@@ -1,11 +1,10 @@
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
+
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("maven-publish")
+    id("com.vanniktech.maven.publish")
 }
-
-group = "com.samvaads"
-version = "0.1.0"
 
 android {
     namespace = "com.samvaads.widget"
@@ -30,12 +29,6 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-        }
-    }
 }
 
 dependencies {
@@ -47,15 +40,53 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
 }
 
-publishing {
-    publications {
-        register<MavenPublication>("release") {
-            groupId = "com.samvaads"
-            artifactId = "widget"
-            version = "0.1.0"
-            afterEvaluate {
-                from(components["release"])
+// Coordinates come from gradle.properties (GROUP, POM_ARTIFACT_ID, VERSION_NAME).
+mavenPublishing {
+    configure(
+        AndroidSingleVariantLibrary(
+            variant = "release",
+            sourcesJar = true,
+            publishJavadocJar = true,
+        )
+    )
+
+    // Uploads through the Central Portal (central.sonatype.com) and releases automatically
+    // once validation passes.
+    publishToMavenCentral(automaticRelease = true)
+
+    // Signing is only required when a key is supplied (CI release). Local
+    // publishToMavenLocal works without one.
+    if (providers.gradleProperty("signingInMemoryKey").isPresent) {
+        signAllPublications()
+    }
+
+    pom {
+        name.set("Samvaad Android SDK")
+        description.set(
+            "Embed the Samvaad customer chat widget in Android apps: open the chat, " +
+                "identify users, track unread messages and handle push notifications."
+        )
+        inceptionYear.set("2026")
+        url.set("https://github.com/sachdesk/samvaad-android")
+        licenses {
+            license {
+                name.set("MIT License")
+                url.set("https://opensource.org/licenses/MIT")
+                distribution.set("repo")
             }
+        }
+        developers {
+            developer {
+                id.set("sachdesk")
+                name.set("Sachdesk")
+                email.set("sachin@sachdesk.com")
+                url.set("https://github.com/sachdesk")
+            }
+        }
+        scm {
+            url.set("https://github.com/sachdesk/samvaad-android")
+            connection.set("scm:git:git://github.com/sachdesk/samvaad-android.git")
+            developerConnection.set("scm:git:ssh://git@github.com/sachdesk/samvaad-android.git")
         }
     }
 }
