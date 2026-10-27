@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Yobruh Shop</string>
+    <string name="title">Yobruh Retail</string>
+    <string name="help">Help</string>
+    <string name="ask_order">Ask about order YB-1042</string>
+    <string name="sign_in">Sign in as demo customer</string>
+    <string name="sign_out">Sign out</string>
+    <string name="signed_out">Not signed in</string>
+    <string name="signed_in_as">Signed in as %1$s</string>
+</resources>
