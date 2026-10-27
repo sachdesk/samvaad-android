@@ -170,4 +170,4 @@ Push wiring is included as commented code, so it builds without Firebase.
 
 ## License
 
-Copyright (c) 2026 Sachdesk. All rights reserved. See [LICENSE](LICENSE).
+Released under the MIT License. Copyright (c) 2026 Sachdesk. See [LICENSE](LICENSE).
